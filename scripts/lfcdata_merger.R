@@ -1,7 +1,7 @@
 
-### Extract data from Laboratori Forestal Català
+### Extract data from Laboratori Forestal Catal?
 
-remotes::install_github('MalditoBarbudo/lfcdata', ref = 'master', force = TRUE)#paketea github kontu batetik instalatzeko 
+remotes::install_github('MalditoBarbudo/lfcdata', ref = 'master', force = TRUE) #packages sometimes have more recent versions that you can update from R.
 
 library(lfcdata)
 
@@ -11,13 +11,13 @@ library(lfcdata)
 if (!require('sp')) install.packages('sp'); library('sp')
 if (!require('sf')) install.packages('sf'); library('sf')
 
-### a veces hay que reinstalar el udunits2
+### a veces hay que reinstalar el udunits2 
 
 meteolanddb <- meteoland()
 nfidb <- nfi()
 catdroughtdb <-catdrought() 
 
-sf_points<- nfidb %>%
+sf_points<- nfidb %>%   
   nfi_get_data('plots', spatial = TRUE) %>%
   dplyr::select(plot_id) %>%
   slice(1:5)
@@ -41,17 +41,17 @@ Eplant_test<-lfcdata::catdrought_get_current_time_series(
   variable="Eplant",
   resolution="smoothed")
 
-sf_points$plot_id<- str_remove(sf_points$plot_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos satélite
-sf_points<- sf_points %>% rename(ID="plot_id") ###cambiamos m¡nombre variable ID
+sf_points$plot_id<- str_remove(sf_points$plot_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos sat?lite
+sf_points<- sf_points %>% rename(ID="plot_id") ###cambiamos m?nombre variable ID
 
-meteo_test$plot_id<- str_remove(meteo_test$plot_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos satélite
+meteo_test$plot_id<- str_remove(meteo_test$plot_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos sat?lite
 meteo_test <- meteo_test %>% rename(ID="plot_id")  
 
-rew_test$point_id<- str_remove(rew_test$point_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos satélite
-rew_test <- rew_test %>% rename(ID="point_id") %>% rename(date="day") ###cambiamos m¡nombre variable ID
+rew_test$point_id<- str_remove(rew_test$point_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos sat?lite
+rew_test <- rew_test %>% rename(ID="point_id") %>% rename(date="day") ###cambiamos m?nombre variable ID
 
-Eplant_test$point_id<- str_remove(Eplant_test$point_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos satélite
-Eplant_test <- Eplant_test %>% rename(ID="point_id") %>% rename(date="day")###cambiamos m¡nombre variable ID
+Eplant_test$point_id<- str_remove(Eplant_test$point_id,"_")   ###ponemos el mismo formato de ID del plot que en los datos sat?lite
+Eplant_test <- Eplant_test %>% rename(ID="point_id") %>% rename(date="day")###cambiamos m?nombre variable ID
 
 ggplot(rew_test,aes(x=day,y=REW))+
   geom_point()+
