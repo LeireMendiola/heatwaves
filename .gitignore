@@ -37,4 +37,11 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Metadata about the folder
+.DS_Store
+Scripts/.DS_Store
+
+
+# the folder with the data
 data/*
