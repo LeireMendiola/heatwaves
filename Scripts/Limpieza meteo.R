@@ -2,8 +2,7 @@
 library(tidyverse)
 
 
-
-setwd ("C:/Users/User/LEIRE/heatwaves/heatwaves/Data/inputs/Meteoland")
+meteo <- read.csv("Data/Cleaned/meteo.csv")
 
 Meteofiles  <- list.files()  
 
