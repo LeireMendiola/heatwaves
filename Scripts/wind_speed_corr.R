@@ -35,6 +35,8 @@ model3 <- lm(VALOR_LECTURA~daily_ws + I(daily_ws^2) + I(daily_ws^3),data=midday)
 summary(model3)
 results3 <- broom::tidy(model3)
 
+#after chosing the best model (3) we will plot it:
+
 model4 <- lm(VALOR_LECTURA~daily_ws + I(daily_ws^2) + I(daily_ws^3) + I(daily_ws^4),data=midday);AIC(model4)
 summary(model4)
 results4 <- broom::tidy(model4)

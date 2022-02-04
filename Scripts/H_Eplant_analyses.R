@@ -6,7 +6,8 @@ library(tidyverse)
 data <- read.csv("Data/Cleaned/HeatFlux_21.csv")
 
 ggplot(data, aes(x=Eplant, y=H)) +
-  geom_point() 
+  geom_point() +
+  geom_line()
 
 #simple linear regression with whole data
 basic.lm = lm(H ~ Eplant, data=data)
@@ -42,14 +43,20 @@ library(lme4)
 random_mod2 <- lmer(H ~ Eplant + (1|ID), data=random_data)
 summary(random_mod2)
 
+#el summary de lmer  no nos da el valor p, para ello tenemos que cargar otro paquete!
+library(lmerTest)
+
+random_mod3 <- lmerTest::lmer(H ~ Eplant + (1|ID), data=random_data)
+summary(random_mod3)
+
 #see the difference between HW and non HW
 
 random_data <- random_data %>%
   group_by(ID) %>%
   mutate(Date=as.Date(Date)) %>%
   mutate(heatwave = 
-           case_when(Date >= ymd("2021-08-10") & Date < ymd("2018-08-16") ~ "hw",
-                    TRUE ~ "nonhw")) #why doesnt filter
+           case_when(Date >= ymd("2021-08-11") & Date < ymd("2018-08-16") ~ "hw",
+                    TRUE ~ "nonhw")) 
 
 random_data <- random_data %>%
   group_by(heatwave) %>%

@@ -4,29 +4,36 @@ library(lubridate)
 
 ##load full dataset
 
-data <- read.csv("Data/Cleaned/full_data_HW.csv")
+full_data <- read.csv("Data/Cleaned/lst_nfi_Eplant_rew_meteo_lidar.csv")
+
+full_data <- full_data %>%
+  select(-c("X","...1.x"))
 
 ##create a dataset only with 05/01/2021-08/31/2021 data
 
-data_21 <- filter(data, Date >= as.Date("2021-06-01"), Date <= as.Date("2021-09-30"))
+data_21 <- filter(full_data, Date >= as.Date("2021-05-01"), Date <= as.Date("2021-09-30"))
+
+#we change format 
+
+select("ID", "Date", "LST_modis", "dbh", "density", "lai", "topo_altitude_asl","HM", "Max" )
 
 data_21 <- data_21 %>% select (-"MeanTemperature.x", -"MinTemperature.x", -"MaxTemperature.x", "Precipitation.x",-"MeanRelativeHumidity.x", -"MinRelativeHumidity.x", -"MaxRelativeHumidity.x", -"Radiation.x", -"WindSpeed.x", -"WindDirection.x", -"PET.x", -"Precipitation.x", -"X.1", -"X") #cleaning dataset
 
 ### calculate sensible heat from DeltaT step by step ###
 
 ##calculate VPDmax from Tmax and RHmin
-data_21 <- data_21 %>% mutate(VPDmax = plantecophys::RHtoVPD(RH=MinRelativeHumidity.y, TdegC =MaxTemperature.y , Pa = 101))   #asumimos que en Tmax RHmin coinciden en el tiempo 
+data_21 <- data_21 %>% mutate(VPDmax = plantecophys::RHtoVPD(RH=MinRelativeHumidity, TdegC =MaxTemperature , Pa = 101))   #asumimos que en Tmax RHmin coinciden en el tiempo 
 
 ##mirar por que tengo tantos NAs
  
 # calculate air pressure from altitude
 data_21 <- data_21 %>% 
   mutate(airP = bigleaf::pressure.from.elevation(elev = topo_altitude_asl,
-                                                 Tair = MaxTemperature.y + 273 , VPD = VPDmax, constants = bigleaf::bigleaf.constants()))
+                                                 Tair = MaxTemperature, VPD = VPDmax, constants = bigleaf::bigleaf.constants()))
 
 # calculate air density for a given air temperature (Tair) and pressure
 data_21 <- data_21 %>% 
-  mutate(rho = bigleaf::air.density(Tair = MaxTemperature.y + 273, pressure = airP, constants = bigleaf::bigleaf.constants()))
+  mutate(rho = bigleaf::air.density(Tair = MaxTemperature, pressure = airP, constants = bigleaf::bigleaf.constants()))
 
 # calculate zero plane displacement, d, from vegetation height as d = 2/3 VH, where VH is mean vegetation height (Brutsaert 1982)
 data_21 <- data_21 %>%  mutate(d = (2/3)*HM)
@@ -37,7 +44,7 @@ data_21 <- data_21 %>% mutate(z0m = 0.1*HM)
 # calculate friction velocity (u*, here uS) from vegetation height and wind speed
 
 #but first Adrià's correction for wind velocity
-data_21 <- data_21 %>% mutate(windS = 1.635*WindSpeed.y - 0.1405*(WindSpeed.y)^2 + 0.00637*(WindSpeed.y)^3 + 0.3416)
+data_21 <- data_21 %>% mutate(windS = 1.635*WindSpeed - 0.1405*(WindSpeed)^2 + 0.00637*(WindSpeed)^3 + 0.3416)
 
 #same but with a function
 ws_correction <- function(windS){windS <- 0.3416 + (1.635*WindS) - (0.1405*WindSy^2) + (0.00637*WindS^3)} 
@@ -72,7 +79,7 @@ calcH <- function(cp, rho, dT, rH){
 
 #we need to add DeltaT
 
-data_21 <- data_21 %>% mutate (DeltaT = LST_plot - (MaxTemperature.y+273))
+data_21 <- data_21 %>% mutate (DeltaT = LST_modis - (MaxTemperature+273))
 
 data_21 <- data_21 %>% 
   mutate(H = calcH(cp = cp, rho = rho, dT = DeltaT, rH = rH))
@@ -80,32 +87,18 @@ data_21 <- data_21 %>%
 # get rid of unreasonable values
 data_21[which(data_21$H > 1500), 'H'] <- NA  #0.92% of observations are NA
 
-#modeling H~Eplant
+### Convert Eplant from mm day-1 to W m-2 as an aproximation to latent heat flux (LE)
 
-H_Eplant <- data_21 %>%
-  filter(!H=="NA")%>%
-  filter(!Eplant=="NA")
-
-H_Eplant <- H_Eplant %>%
-  dplyr::select("H","Eplant")
-
-data_21[is.na(data_21) | data_21 == "Inf"] <- NA
-
-summary(lm(H ~ Eplant, data = H_Eplant))
-View(H_Eplant)
-
-HE_clean <- H_Eplant %>% filter(H>0)
-
-
-### Convert Eplant from mm day-1 to W m-2
-
-plantMod <- plantMod %>%
+data_21 <- data_21 %>%
   mutate(LE = Eplant * 2.45*10^6/24/3600)
 
-hist(plantMod$LE)
+hist(data_21$LE)
+
+#before modeling save 2021 summer database with heat fluxes
+
+write.csv(data_21, "Data/Cleaned/HeatFlux_21.csv")
 
 #min(e_plant$Date)
-
 
 ### sensible heat from energy budget
 plantMod <- plantMod %>%
